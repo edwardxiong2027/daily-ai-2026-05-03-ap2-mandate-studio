@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AP2 Mandate Studio</title>
+  <style>
+    :root {
+      --bg: #08111f;
+      --panel: #101c30;
+      --panel-2: #13243d;
+      --line: rgba(148, 163, 184, 0.24);
+      --text: #e6eefb;
+      --muted: #9bb0cf;
+      --accent: #6ee7ff;
+      --accent-2: #8b5cf6;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --chip: rgba(110, 231, 255, 0.12);
+      --shadow: 0 18px 60px rgba(2, 6, 23, 0.45);
+      --radius: 20px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: radial-gradient(circle at top, #102347, #08111f 48%); color: var(--text); font-family: var(--sans); }
+    body { min-height: 100vh; }
+    a { color: var(--accent); }
+    .page { width: min(1380px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 56px; }
+    .hero, .panel, .output-card, .sources { background: rgba(16, 28, 48, 0.92); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+    .hero { padding: 28px; display: grid; gap: 18px; }
+    .hero-top { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 0.95; letter-spacing: -0.04em; }
+    .sub { color: var(--muted); max-width: 860px; line-height: 1.6; font-size: 1.02rem; }
+    .chips, .stats { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip { padding: 8px 12px; background: var(--chip); border: 1px solid rgba(110, 231, 255, 0.22); border-radius: 999px; color: var(--accent); font-size: 0.92rem; }
+    .stats .chip { color: var(--text); }
+    .layout { margin-top: 22px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 20px; }
+    .panel { padding: 22px; }
+    .panel h2, .output-card h2, .sources h2 { font-size: 1.1rem; margin-bottom: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field { display: grid; gap: 8px; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: 0.9rem; color: var(--muted); }
+    input, textarea, select {
+      width: 100%; border-radius: 14px; border: 1px solid rgba(148, 163, 184, 0.22); background: var(--panel-2); color: var(--text);
+      padding: 12px 14px; font: inherit;
+    }
+    textarea { min-height: 98px; resize: vertical; }
+    .hint { color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+    .toggles { display: grid; gap: 10px; margin-top: 4px; }
+    .toggle {
+      display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px;
+      background: var(--panel-2); border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+    .toggle input { width: auto; margin-top: 3px; }
+    .action-row, .preset-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    button {
+      border: 0; border-radius: 12px; padding: 12px 16px; font: inherit; cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), #7dd3fc 55%, #c084fc); color: #04111d; font-weight: 700;
+    }
+    button.secondary { background: rgba(148, 163, 184, 0.12); color: var(--text); border: 1px solid rgba(148, 163, 184, 0.2); }
+    button.ghost { background: transparent; color: var(--muted); border: 1px dashed rgba(148, 163, 184, 0.3); }
+    .output { display: grid; gap: 16px; }
+    .output-card { padding: 22px; }
+    .risk-band { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .risk-number { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.05em; }
+    .badge { padding: 8px 12px; border-radius: 999px; font-weight: 700; }
+    .low { background: rgba(52, 211, 153, 0.16); color: var(--good); }
+    .medium { background: rgba(251, 191, 36, 0.16); color: var(--warn); }
+    .high { background: rgba(251, 113, 133, 0.16); color: var(--bad); }
+    .checklist { display: grid; gap: 8px; margin-top: 12px; }
+    .checklist li { color: var(--muted); }
+    pre {
+      margin: 0; white-space: pre-wrap; word-break: break-word; padding: 16px; background: #091422;
+      border: 1px solid rgba(148, 163, 184, 0.15); border-radius: 16px; font-family: var(--mono); font-size: 0.83rem; line-height: 1.5;
+      max-height: 420px; overflow: auto;
+    }
+    .split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .sources { margin-top: 20px; padding: 22px; }
+    .source-list { display: grid; gap: 14px; }
+    .source-item {
+      padding: 14px; border-radius: 16px; background: rgba(19, 36, 61, 0.88); border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+    .source-item p { color: var(--muted); line-height: 1.55; margin-top: 6px; }
+    .foot { color: var(--muted); margin-top: 18px; line-height: 1.5; }
+    .small { font-size: 0.85rem; color: var(--muted); }
+    @media (max-width: 1080px) {
+      .layout, .split { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+      .page { width: min(100% - 20px, 1380px); }
+      .hero, .panel, .output-card, .sources { border-radius: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="chips">
+            <span class="chip">Weekly Sunday Project Builder</span>
+            <span class="chip">Agent-first</span>
+            <span class="chip">Static + GitHub Pages</span>
+          </div>
+          <h1>AP2 Mandate Studio</h1>
+          <p class="sub">Build machine-readable intent mandates, cart approvals, and runtime guardrails for autonomous purchasing agents. Inspired by Google’s Agent Payments Protocol, OpenAI’s sandboxed Agents SDK, and GitHub’s new cloud-agent firewall controls.</p>
+        </div>
+        <div class="stats">
+          <span class="chip">Outputs: JSON + YAML + brief</span>
+          <span class="chip">Use case: procurement / voice agents / tool-buying bots</span>
+          <span class="chip">Goal: safer agent-led commerce</span>
+        </div>
+      </div>
+      <p class="small">This MVP is designed for agent operators and evaluator agents first: it favors explicit permissions, exportable policy artifacts, and auditability over consumer UI flourishes.</p>
+    </section>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>1) Define the mandate</h2>
+        <div class="preset-row">
+          <button class="secondary" data-preset="procurement">Procurement bot</button>
+          <button class="secondary" data-preset="voice">Voice sales agent</button>
+          <button class="secondary" data-preset="research">Sandbox researcher</button>
+        </div>
+        <div class="grid" style="margin-top:14px;">
+          <div class="field">
+            <label for="operatorName">Operator / org</label>
+            <input id="operatorName" value="Northwind Ops" />
+          </div>
+          <div class="field">
+            <label for="agentName">Agent identity</label>
+            <input id="agentName" value="ProcurementAgent-7" />
+          </div>
+          <div class="field">
+            <label for="mission">Mission</label>
+            <input id="mission" value="Purchase approved developer tooling under budget and policy." />
+          </div>
+          <div class="field">
+            <label for="budget">Max spend (USD)</label>
+            <input id="budget" type="number" min="0" step="1" value="600" />
+          </div>
+          <div class="field">
+            <label for="approval">Approval mode</label>
+            <select id="approval">
+              <option value="human-cart">Human approves final cart</option>
+              <option value="threshold">Auto below threshold, escalate above</option>
+              <option value="autonomous">Fully autonomous within policy</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="paymentRail">Payment rail</label>
+            <select id="paymentRail">
+              <option value="virtual-card">Virtual card</option>
+              <option value="invoice">Invoice / net terms</option>
+              <option value="stablecoin">Stablecoin / x402-style</option>
+              <option value="wallet">Prefunded agent wallet</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="allowedDomains">Allowed merchants / tool domains</label>
+            <textarea id="allowedDomains">api.openai.com
+console.x.ai
+github.com
+cloud.google.com</textarea>
+            <div class="hint">One domain per line. Empty or wildcard-heavy lists increase risk because they widen where the agent can spend or exfiltrate.</div>
+          </div>
+          <div class="field full">
+            <label for="items">Target items or categories</label>
+            <textarea id="items">Developer API credits
+Managed sandbox runtime
+CI compute minutes</textarea>
+          </div>
+          <div class="field full">
+            <label for="constraints">Guardrail constraints</label>
+            <textarea id="constraints">No purchases from personal accounts
+No recurring subscriptions over 30 days
+No data egress outside approved domains
+Escalate on tax or compliance mismatch</textarea>
+          </div>
+          <div class="field full">
+            <label for="tools">Runtime tool access</label>
+            <textarea id="tools">web_search
+file_access
+payment_submit
+sandbox_execute</textarea>
+          </div>
+        </div>
+
+        <div class="toggles">
+          <label class="toggle"><input id="needsSandbox" type="checkbox" checked /> <span><strong>Require sandbox execution</strong><br /><span class="hint">Aligns with OpenAI’s updated Agents SDK guidance for running commands and file work in controlled environments.</span></span></label>
+          <label class="toggle"><input id="needsFirewall" type="checkbox" checked /> <span><strong>Apply outbound domain firewall</strong><br /><span class="hint">Maps to GitHub Copilot cloud agent-style allowlists and centralized egress controls.</span></span></label>
+          <label class="toggle"><input id="needsReceipt" type="checkbox" checked /> <span><strong>Demand non-repudiable receipt chain</strong><br /><span class="hint">Create an audit trail linking user intent, final cart, payment authorization, and post-run evidence.</span></span></label>
+          <label class="toggle"><input id="canCallRealtime" type="checkbox" /> <span><strong>Allow realtime voice / search tools</strong><br /><span class="hint">Useful for agentic voice flows such as xAI voice agents, but expands the surface area and should usually stay constrained.</span></span></label>
+        </div>
+
+        <div class="action-row">
+          <button id="generateBtn">Generate mandate pack</button>
+          <button id="copyJsonBtn" class="secondary">Copy JSON</button>
+          <button id="copyYamlBtn" class="secondary">Copy YAML</button>
+          <button id="resetBtn" class="ghost">Reset to defaults</button>
+        </div>
+      </section>
+
+      <section class="output">
+        <article class="output-card">
+          <h2>2) Risk posture</h2>
+          <div class="risk-band">
+            <div>
+              <div class="small">Composite risk score</div>
+              <div class="risk-number" id="riskScore">32</div>
+            </div>
+            <span id="riskBadge" class="badge medium">MEDIUM</span>
+          </div>
+          <p id="riskSummary" class="sub" style="font-size:0.98rem; max-width:none;">Human-in-the-loop cart approval and explicit domain allowlists keep this mandate controlled, but payment authority and execution tools still require careful auditing.</p>
+          <ul class="checklist" id="riskList"></ul>
+        </article>
+
+        <article class="output-card">
+          <h2>3) Machine-readable export</h2>
+          <div class="split">
+            <div>
+              <div class="small" style="margin-bottom:8px;">intent-mandate.json</div>
+              <pre id="jsonOutput"></pre>
+            </div>
+            <div>
+              <div class="small" style="margin-bottom:8px;">guardrail-policy.yaml</div>
+              <pre id="yamlOutput"></pre>
+            </div>
+          </div>
+        </article>
+
+        <article class="output-card">
+          <h2>4) Audit brief</h2>
+          <pre id="briefOutput"></pre>
+        </article>
+      </section>
+    </div>
+
+    <section class="sources">
+      <h2>Why this project now</h2>
+      <div class="source-list">
+        <article class="source-item">
+          <strong>Google Cloud: Agent Payments Protocol (AP2)</strong>
+          <p>Google’s AP2 announcement frames agent-led payments around authorization, authenticity, and accountability, using intent mandates and cart mandates to produce a non-repudiable audit trail. This project turns that idea into a tiny usable generator for operator-defined purchase rules.</p>
+          <a href="https://cloud.google.com/blog/products/ai-machine-learning/announcing-agents-to-payments-ap2-protocol">Source</a>
+        </article>
+        <article class="source-item">
+          <strong>OpenAI: The next evolution of the Agents SDK</strong>
+          <p>OpenAI’s updated Agents SDK adds a model-native harness plus native sandbox execution, explicitly arguing that agent systems should assume prompt injection and exfiltration attempts. That makes exportable runtime guardrails a first-class need, not a nice-to-have.</p>
+          <a href="https://openai.com/index/the-next-evolution-of-the-agents-sdk/">Source</a>
+        </article>
+        <article class="source-item">
+          <strong>GitHub: organization firewall settings for Copilot cloud agent</strong>
+          <p>GitHub now lets org admins centrally manage cloud-agent firewall defaults and allowlists. The signal is clear: if agents are real operators, their network and tool boundaries need machine-readable policy surfaces.</p>
+          <a href="https://github.blog/changelog/2026-04-03-organization-firewall-settings-for-copilot-cloud-agent/">Source</a>
+        </article>
+        <article class="source-item">
+          <strong>Reuters via Yahoo Finance: Google puts AI agents at the heart of enterprise monetization</strong>
+          <p>Reuters reports that Google is making AI agents a core enterprise monetization strategy, with governance and security features bundled into the pitch. That commercial framing is why agent policy tooling is immediately useful.</p>
+          <a href="https://uk.finance.yahoo.com/news/google-puts-ai-agents-heart-120308146.html">Source</a>
+        </article>
+        <article class="source-item">
+          <strong>xAI: Grok Voice Agent API</strong>
+          <p>xAI’s new voice agent API adds multilingual, real-time, tool-calling agents to the mix. Voice-first agents increase the importance of budget limits, approval thresholds, and explicit merchant allowlists.</p>
+          <a href="https://x.ai/news/grok-voice-agent-api">Source</a>
+        </article>
+      </div>
+      <p class="foot">This is not an official implementation of AP2. It is a practical, browser-native operator tool for drafting agent commerce policies, exportable artifacts, and audit summaries.</p>
+    </section>
+  </div>
+
+  <script>
+    const defaults = {
+      operatorName: 'Northwind Ops',
+      agentName: 'ProcurementAgent-7',
+      mission: 'Purchase approved developer tooling under budget and policy.',
+      budget: 600,
+      approval: 'human-cart',
+      paymentRail: 'virtual-card',
+      allowedDomains: 'api.openai.com\nconsole.x.ai\ngithub.com\ncloud.google.com',
+      items: 'Developer API credits\nManaged sandbox runtime\nCI compute minutes',
+      constraints: 'No purchases from personal accounts\nNo recurring subscriptions over 30 days\nNo data egress outside approved domains\nEscalate on tax or compliance mismatch',
+      tools: 'web_search\nfile_access\npayment_submit\nsandbox_execute',
+      needsSandbox: true,
+      needsFirewall: true,
+      needsReceipt: true,
+      canCallRealtime: false
+    };
+
+    const presets = {
+      procurement: {
+        operatorName: 'Northwind Ops',
+        agentName: 'ProcurementAgent-7',
+        mission: 'Purchase approved developer tooling under budget and policy.',
+        budget: 600,
+        approval: 'human-cart',
+        paymentRail: 'virtual-card',
+        allowedDomains: 'api.openai.com\nconsole.x.ai\ngithub.com\ncloud.google.com',
+        items: 'Developer API credits\nManaged sandbox runtime\nCI compute minutes',
+        constraints: 'No purchases from personal accounts\nNo recurring subscriptions over 30 days\nNo data egress outside approved domains\nEscalate on tax or compliance mismatch',
+        tools: 'web_search\nfile_access\npayment_submit\nsandbox_execute',
+        needsSandbox: true,
+        needsFirewall: true,
+        needsReceipt: true,
+        canCallRealtime: false
+      },
+      voice: {
+        operatorName: 'Helios Support',
+        agentName: 'VoiceSalesAgent-2',
+        mission: 'Book approved demo slots and sell low-risk plans through realtime voice workflows.',
+        budget: 250,
+        approval: 'threshold',
+        paymentRail: 'invoice',
+        allowedDomains: 'crm.helios.example\nconsole.x.ai\nstripe.com',
+        items: 'Demo bookings\nPhone verification\nStarter subscription upgrades',
+        constraints: 'No discounts above 15%\nEscalate enterprise tiers\nNo contract term changes\nLog every customer-facing tool call',
+        tools: 'realtime_voice\ncrm_lookup\npayment_submit\ncalendar_write',
+        needsSandbox: true,
+        needsFirewall: true,
+        needsReceipt: true,
+        canCallRealtime: true
+      },
+      research: {
+        operatorName: 'Delta Labs',
+        agentName: 'SandboxScout',
+        mission: 'Evaluate vendor offers and gather evidence before a human approves spend.',
+        budget: 120,
+        approval: 'human-cart',
+        paymentRail: 'wallet',
+        allowedDomains: 'arxiv.org\ngithub.com\nopenai.com\ncloud.google.com',
+        items: 'Benchmark datasets\nTemporary eval credits\nLow-cost API trials',
+        constraints: 'No automatic renewals\nNo PII uploads\nNo unapproved browser logins\nMust attach benchmark evidence before checkout',
+        tools: 'web_search\nfile_access\nsandbox_execute\nreport_write',
+        needsSandbox: true,
+        needsFirewall: true,
+        needsReceipt: true,
+        canCallRealtime: false
+      }
+    };
+
+    const ids = Object.keys(defaults);
+    const el = (id) => document.getElementById(id);
+
+    function lines(value) {
+      return value.split('\n').map((x) => x.trim()).filter(Boolean);
+    }
+
+    function approvalLabel(value) {
+      return {
+        'human-cart': 'Human approves final cart before payment.',
+        threshold: 'Agent can auto-pay below threshold and escalate above it.',
+        autonomous: 'Agent can act autonomously within policy.'
+      }[value] || value;
+    }
+
+    function paymentLabel(value) {
+      return {
+        'virtual-card': 'Virtual card',
+        invoice: 'Invoice / net terms',
+        stablecoin: 'Stablecoin / x402-style',
+        wallet: 'Prefunded agent wallet'
+      }[value] || value;
+    }
+
+    function scoreRisk(data) {
+      let score = 10;
+      const reasons = [];
+      const domains = lines(data.allowedDomains);
+      const tools = lines(data.tools);
+      if (Number(data.budget) > 1000) { score += 28; reasons.push('High spending authority increases financial blast radius.'); }
+      else if (Number(data.budget) > 400) { score += 14; reasons.push('Moderate spending authority still needs active oversight.'); }
+      else { score += 6; reasons.push('Lower budget narrows direct financial exposure.'); }
+
+      if (data.approval === 'autonomous') { score += 26; reasons.push('Fully autonomous checkout removes the strongest human checkpoint.'); }
+      else if (data.approval === 'threshold') { score += 15; reasons.push('Threshold automation improves speed but needs careful threshold tuning.'); }
+      else { score += 4; reasons.push('Human cart approval materially reduces accidental purchases.'); }
+
+      if (data.paymentRail === 'stablecoin') { score += 18; reasons.push('Stablecoin-style settlement can be harder to reverse and monitor.'); }
+      else if (data.paymentRail === 'wallet') { score += 12; reasons.push('Prefunded wallets reduce chargeback friction but create balance custody risk.'); }
+      else if (data.paymentRail === 'virtual-card') { score += 8; reasons.push('Virtual cards are controllable but still expose card-like spending rights.'); }
+      else { score += 5; reasons.push('Invoice terms lower instant payment risk but can hide delayed liability.'); }
+
+      if (!data.needsSandbox) { score += 18; reasons.push('No sandbox requirement raises the odds of unsafe code or file operations.'); }
+      else { score += 3; reasons.push('Sandbox execution contains file and command operations.'); }
+
+      if (!data.needsFirewall) { score += 18; reasons.push('No outbound allowlist expands prompt-injection and exfiltration surface.'); }
+      else { score += 3; reasons.push('Outbound domain controls constrain agent reach.'); }
+
+      if (!data.needsReceipt) { score += 14; reasons.push('Missing receipt-chain requirements weakens accountability and dispute resolution.'); }
+      else { score += 2; reasons.push('Receipt-chain requirements support non-repudiable auditing.'); }
+
+      if (data.canCallRealtime) { score += 10; reasons.push('Realtime and voice tools widen interaction surface and require stricter logging.'); }
+
+      if (domains.length <= 1) { score += 18; reasons.push('Very small or underspecified merchant lists often hide wildcard behavior.'); }
+      else if (domains.length <= 3) { score += 10; reasons.push('Short allowlists are manageable but still deserve targeted review.'); }
+      else { score += 4; reasons.push('Explicit multi-domain allowlists improve policy precision.'); }
+
+      if (tools.includes('payment_submit') && tools.includes('sandbox_execute')) {
+        score += 8; reasons.push('Combining execution and payment powers warrants extra telemetry and approvals.');
+      }
+
+      const bounded = Math.max(0, Math.min(100, score));
+      const band = bounded >= 67 ? 'HIGH' : bounded >= 34 ? 'MEDIUM' : 'LOW';
+      return { score: bounded, band, reasons };
+    }
+
+    function buildJson(data, risk) {
+      const now = new Date().toISOString();
+      const domains = lines(data.allowedDomains);
+      const items = lines(data.items);
+      const constraints = lines(data.constraints);
+      const tools = lines(data.tools);
+      const threshold = data.approval === 'threshold' ? Math.max(50, Math.round(Number(data.budget) * 0.35)) : null;
+      return {
+        schema_version: '0.1.0',
+        artifact: 'agent-commerce-mandate-pack',
+        generated_at: now,
+        intent_mandate: {
+          operator: data.operatorName,
+          agent_id: data.agentName,
+          mission: data.mission,
+          budget_usd_max: Number(data.budget),
+          approval_mode: data.approval,
+          approval_summary: approvalLabel(data.approval),
+          payment_rail: data.paymentRail,
+          allowed_domains: domains,
+          target_items: items,
+          constraints,
+          runtime_tools: tools,
+          security_controls: {
+            sandbox_required: data.needsSandbox,
+            outbound_firewall: data.needsFirewall,
+            receipt_chain_required: data.needsReceipt,
+            realtime_tools_allowed: data.canCallRealtime
+          },
+          escalation_policy: {
+            threshold_usd: threshold,
+            escalate_on_domains_not_in_allowlist: true,
+            escalate_on_recurring_billing: true,
+            escalate_on_compliance_mismatch: true
+          }
+        },
+        cart_mandate_template: {
+          cart_status: 'draft',
+          purchaser_agent: data.agentName,
+          operator_confirmation_required: data.approval !== 'autonomous',
+          evidence_required: ['itemized_cart', 'unit_prices', 'merchant_domain', 'justification', 'budget_check'],
+          receipt_chain: data.needsReceipt ? ['intent_mandate', 'cart_mandate', 'payment_authorization', 'execution_log'] : []
+        },
+        audit: {
+          risk_score: risk.score,
+          risk_band: risk.band,
+          primary_risks: risk.reasons.slice(0, 5)
+        }
+      };
+    }
+
+    function buildYaml(data, risk) {
+      const domains = lines(data.allowedDomains).map((d) => `  - ${d}`).join('\n');
+      const tools = lines(data.tools).map((t) => `  - ${t}`).join('\n');
+      const constraints = lines(data.constraints).map((c) => `  - ${c}`).join('\n');
+      return [
+        'version: 0.1.0',
+        'policy: agent-commerce-guardrails',
+        `agent_id: ${data.agentName}`,
+        `operator: ${data.operatorName}`,
+        `risk_band: ${risk.band}`,
+        `risk_score: ${risk.score}`,
+        'permissions:',
+        `  sandbox_required: ${data.needsSandbox}`,
+        `  outbound_firewall: ${data.needsFirewall}`,
+        `  receipt_chain_required: ${data.needsReceipt}`,
+        `  realtime_tools_allowed: ${data.canCallRealtime}`,
+        `  payment_rail: ${data.paymentRail}`,
+        `  approval_mode: ${data.approval}`,
+        `  budget_usd_max: ${Number(data.budget)}`,
+        'allowed_domains:',
+        domains || '  - none',
+        'runtime_tools:',
+        tools || '  - none',
+        'constraints:',
+        constraints || '  - none',
+        'required_evidence:',
+        '  - itemized_cart',
+        '  - merchant_domain',
+        '  - budget_check',
+        '  - execution_log',
+        '  - receipt_or_invoice_id'
+      ].join('\n');
+    }
+
+    function buildBrief(data, risk, jsonPack) {
+      return [
+        `Mandate brief: ${data.agentName}`,
+        '',
+        `Mission: ${data.mission}`,
+        `Operator: ${data.operatorName}`,
+        `Approval mode: ${approvalLabel(data.approval)}`,
+        `Payment rail: ${paymentLabel(data.paymentRail)}`,
+        `Budget cap: $${Number(data.budget).toLocaleString()}`,
+        '',
+        `Risk band: ${risk.band} (${risk.score}/100)`,
+        `Top concerns:`,
+        ...risk.reasons.slice(0, 4).map((reason, idx) => `${idx + 1}. ${reason}`),
+        '',
+        'Recommended next steps:',
+        `- ${data.needsSandbox ? 'Keep sandbox execution enabled for all file and command work.' : 'Add a sandbox before letting this agent touch tools or local files.'}`,
+        `- ${data.needsFirewall ? 'Maintain a strict domain allowlist and review every exception.' : 'Introduce an outbound domain firewall immediately.'}`,
+        `- ${data.approval === 'autonomous' ? 'Add threshold-based escalation for high-value or recurring charges.' : 'Preserve human review for edge cases and recurring commitments.'}`,
+        `- ${data.needsReceipt ? 'Store intent/cart/payment artifacts together for later audits.' : 'Require a signed receipt chain before production use.'}`,
+        '',
+        `Export contains ${jsonPack.intent_mandate.allowed_domains.length} allowed domains and ${jsonPack.intent_mandate.runtime_tools.length} runtime tools.`
+      ].join('\n');
+    }
+
+    function readForm() {
+      const data = {};
+      ids.forEach((id) => {
+        const node = el(id);
+        data[id] = node.type === 'checkbox' ? node.checked : node.value;
+      });
+      return data;
+    }
+
+    function render() {
+      const data = readForm();
+      const risk = scoreRisk(data);
+      const jsonPack = buildJson(data, risk);
+      const yaml = buildYaml(data, risk);
+      const brief = buildBrief(data, risk, jsonPack);
+
+      el('riskScore').textContent = String(risk.score);
+      const badge = el('riskBadge');
+      badge.textContent = risk.band;
+      badge.className = `badge ${risk.band.toLowerCase()}`;
+      el('riskSummary').textContent = risk.band === 'HIGH'
+        ? 'This mandate gives the agent meaningful operational power. Tighten approvals, receipts, and egress controls before production use.'
+        : risk.band === 'MEDIUM'
+          ? 'This mandate is usable for supervised operations, but it still benefits from explicit monitoring and operator checkpoints.'
+          : 'This mandate stays relatively bounded. Keep the guardrails explicit and preserve your audit trail.';
+      el('riskList').innerHTML = risk.reasons.map((reason) => `<li>${reason}</li>`).join('');
+      el('jsonOutput').textContent = JSON.stringify(jsonPack, null, 2);
+      el('yamlOutput').textContent = yaml;
+      el('briefOutput').textContent = brief;
+    }
+
+    function applyValues(values) {
+      ids.forEach((id) => {
+        const node = el(id);
+        const value = values[id];
+        if (node.type === 'checkbox') node.checked = Boolean(value);
+        else node.value = value;
+      });
+      render();
+    }
+
+    async function copyText(text, label) {
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = el(label).textContent;
+        el(label).textContent = 'Copied!';
+        setTimeout(() => { el(label).textContent = original; }, 1200);
+      } catch {
+        alert('Clipboard copy failed in this browser. You can still select the text manually.');
+      }
+    }
+
+    document.querySelectorAll('[data-preset]').forEach((button) => {
+      button.addEventListener('click', () => applyValues(presets[button.dataset.preset]));
+    });
+    ids.forEach((id) => el(id).addEventListener('input', render));
+    el('generateBtn').addEventListener('click', render);
+    el('resetBtn').addEventListener('click', () => applyValues(defaults));
+    el('copyJsonBtn').addEventListener('click', () => copyText(el('jsonOutput').textContent, 'copyJsonBtn'));
+    el('copyYamlBtn').addEventListener('click', () => copyText(el('yamlOutput').textContent, 'copyYamlBtn'));
+
+    applyValues(defaults);
+  </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Local preview logs or scratch files
+*.log
+.tmp/
