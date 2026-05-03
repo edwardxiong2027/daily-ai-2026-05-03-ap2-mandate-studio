@@ -20,7 +20,7 @@ It is inspired by:
 
 ## Live URL
 
-Pending GitHub Pages deployment.
+https://edwardxiong2027.github.io/daily-ai-2026-05-03-ap2-mandate-studio/
 
 ## Local preview
 
